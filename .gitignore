@@ -1,0 +1,33 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.json.key
+*-key.json
+*credentials*.json
+service-account*.json
+application_default_credentials.json
+
+# Pipeline output (raw, processed, report, local GCS mirror)
+output/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Tools
+.adk/
+.claude/
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Word lock files
+~$*.docx

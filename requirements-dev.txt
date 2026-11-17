@@ -1,0 +1,4 @@
+# Development tools: tests and the Word document builder.
+-r requirements.txt
+pytest==9.2.0
+python-docx==1.2.0
