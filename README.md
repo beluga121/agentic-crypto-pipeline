@@ -67,8 +67,8 @@ Each agent also saves its one-line summary in state (`ingest_summary`, `transfor
 macOS / Linux (bash or zsh):
 
 ```bash
-git clone <GITHUB_REPO_URL> crypto-pipeline
-cd crypto-pipeline
+git clone https://github.com/beluga121/agentic-crypto-pipeline.git
+cd agentic-crypto-pipeline
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -78,8 +78,8 @@ cp .env.example .env
 Windows (PowerShell):
 
 ```powershell
-git clone <GITHUB_REPO_URL> crypto-pipeline
-cd crypto-pipeline
+git clone https://github.com/beluga121/agentic-crypto-pipeline.git
+cd agentic-crypto-pipeline
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt

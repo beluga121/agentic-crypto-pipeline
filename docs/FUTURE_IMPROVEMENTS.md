@@ -1,4 +1,4 @@
-Repository: <GITHUB_REPO_URL>
+Repository: https://github.com/beluga121/agentic-crypto-pipeline
 
 # Agentic Crypto Data Pipeline: Future Improvements
 
