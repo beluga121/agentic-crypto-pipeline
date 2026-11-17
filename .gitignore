@@ -1,6 +1,8 @@
 # Secrets
 .env
 .env.*
+*.env
+*.env.txt
 !.env.example
 *.json.key
 *-key.json
