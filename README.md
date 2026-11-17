@@ -46,7 +46,7 @@ Each agent also saves its one-line summary in state (`ingest_summary`, `transfor
 │   ├── tools/                  # ingest.py, transform.py, storage.py, report.py
 │   └── templates/report.html.j2
 ├── tests/                      # pytest suite + small made-up fixture
-├── docs/                       # Future Improvements (.md source, .docx, builder script)
+├── docs/                       # Future Improvements source + build_docx.py (the .docx is submitted separately)
 ├── .env.example                # placeholders only
 ├── requirements.txt            # pinned runtime dependencies
 └── requirements-dev.txt        # + pytest, python-docx

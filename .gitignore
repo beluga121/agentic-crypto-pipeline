@@ -31,3 +31,8 @@ desktop.ini
 
 # Word lock files
 ~$*.docx
+
+# The Future Improvements Word/PDF file is a separate submission, not part of the repo.
+# Build it locally with: python docs/build_docx.py
+docs/*.docx
+docs/*.pdf
