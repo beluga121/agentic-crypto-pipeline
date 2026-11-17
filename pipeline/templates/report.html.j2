@@ -1,0 +1,343 @@
+<!doctype html>
+{#-
+  Crypto market snapshot report.
+  Visual system: IBM Design Language / Carbon style (gray-dominant, one Purple
+  accent, 2x Grid with an 8px mini unit, IBM type scale, flat square tiles).
+  Self-contained on purpose: no scripts, web fonts or external files, so the
+  page renders offline and the CSP below can block everything else.
+  Autoescape is on: every {{ value }} is HTML-escaped, including coin names.
+-#}
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>Crypto market snapshot</title>
+<style>
+/* ---------- Tokens: Gray 10 theme (light) ---------- */
+:root {
+  --background: #f4f4f4;
+  --layer: #ffffff;
+  --layer-accent: #e0e0e0;
+  --border-subtle: #e0e0e0;
+  --border-strong: #8d8d8d;
+  --text-primary: #161616;
+  --text-secondary: #525252;
+  --text-helper: #6f6f6f;
+  --link: #8a3ffc;
+  --link-hover: #6929c4;
+  --focus: #8a3ffc;
+  --accent-data: #8a3ffc;
+  --track: #e0e0e0;
+  --up: #198038;
+  --down: #da1e28;
+  --shell: #161616;
+  --shell-text: #f4f4f4;
+  --shell-border: #161616;
+
+  --font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+/* ---------- Tokens: Gray 100 theme (dark) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #161616;
+    --layer: #262626;
+    --layer-accent: #393939;
+    --border-subtle: #393939;
+    --border-strong: #6f6f6f;
+    --text-primary: #f4f4f4;
+    --text-secondary: #c6c6c6;
+    --text-helper: #a8a8a8;
+    --link: #be95ff;
+    --link-hover: #d4bbff;
+    --focus: #ffffff;
+    --accent-data: #a56eff;
+    --track: #393939;
+    --up: #42be65;
+    --down: #ff8389;
+    --shell-border: #393939;
+  }
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.16px;
+}
+a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--link-hover); }
+a:focus-visible, .table-scroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+.mono { font-family: var(--font-mono); letter-spacing: 0.32px; }
+.up { color: var(--up); }
+.down { color: var(--down); }
+.flat { color: var(--text-secondary); }
+
+/* ---------- Shell header (48px, Gray 100) ---------- */
+.shell {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--shell);
+  color: var(--shell-text);
+  border-bottom: 1px solid var(--shell-border);
+}
+.shell__name { font-size: 14px; line-height: 18px; }
+.shell__name strong { font-weight: 600; }
+.shell__meta { margin-left: auto; font-size: 12px; line-height: 16px; color: #c6c6c6; }
+
+/* ---------- 2x Grid: 4 / 8 / 16 columns, 32px gutter ---------- */
+.page { max-width: 1584px; margin: 0 auto; padding: 0 16px; }
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 32px; row-gap: 32px; }
+.col-full { grid-column: 1 / -1; }
+.col-kpi { grid-column: span 2; }
+.col-half, .col-chart, .col-table { grid-column: 1 / -1; }
+@media (min-width: 672px) {
+  .page { padding: 0 32px; }
+  .grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .col-half { grid-column: span 4; }
+}
+@media (min-width: 1056px) {
+  .grid { grid-template-columns: repeat(16, minmax(0, 1fr)); }
+  .col-chart { grid-column: span 6; }
+  .col-table { grid-column: span 10; }
+  .col-half { grid-column: span 8; }
+}
+
+/* ---------- Page header ---------- */
+.page-header { padding: 48px 0 32px; }
+.eyebrow { font-size: 12px; line-height: 16px; color: var(--text-secondary); margin-bottom: 16px; }
+h1 { font-size: 32px; line-height: 40px; font-weight: 300; letter-spacing: 0; }
+@media (min-width: 672px) { h1 { font-size: 42px; line-height: 50px; } }
+.lead { margin-top: 16px; max-width: 640px; font-size: 16px; line-height: 24px; letter-spacing: 0; color: var(--text-secondary); }
+
+/* ---------- KPI tiles (condensed: 1px gutters show the border color) ---------- */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  margin: 0;
+}
+@media (min-width: 672px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.kpi { background: var(--layer); padding: 16px; min-height: 144px; display: flex; flex-direction: column; }
+@media (min-width: 1056px) { .kpi { padding: 24px; } }
+.kpis dd { margin: 0; }
+.kpi__label { font-size: 12px; line-height: 16px; color: var(--text-secondary); }
+.kpi__value {
+  margin-top: auto;
+  padding-top: 24px;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (min-width: 1056px) { .kpi__value { font-size: 36px; line-height: 44px; } }
+.kpi__icon { fill: currentColor; margin-left: 4px; vertical-align: baseline; }
+.kpi__note { margin-top: 8px; font-size: 12px; line-height: 16px; color: var(--text-helper); }
+
+/* ---------- Section tiles ---------- */
+.section { margin-top: 48px; }
+.tile { background: var(--layer); padding: 16px; height: 100%; }
+@media (min-width: 1056px) { .tile { padding: 24px; } }
+.tile__title { font-size: 16px; line-height: 22px; font-weight: 600; letter-spacing: 0; }
+.tile__takeaway { margin-top: 4px; color: var(--text-secondary); }
+.tile__body { margin-top: 24px; }
+
+/* ---------- Bar charts (inline SVG, percentage widths) ---------- */
+.bars { display: block; width: 100%; overflow: visible; }
+.bar-label { fill: var(--text-primary); font-family: var(--font-sans); font-size: 14px; }
+.bar-detail { fill: var(--text-helper); font-family: var(--font-mono); font-size: 12px; }
+.bar-value { fill: var(--text-primary); font-family: var(--font-mono); font-size: 14px; }
+.bar-track { fill: var(--track); }
+.bar-fill--accent { fill: var(--accent-data); }
+.bar-fill--up { fill: var(--up); }
+.bar-fill--down { fill: var(--down); }
+.bar-value.up { fill: var(--up); }
+.bar-value.down { fill: var(--down); }
+.legend { margin-top: 16px; font-size: 12px; line-height: 16px; color: var(--text-helper); }
+.empty { color: var(--text-secondary); }
+
+/* ---------- Data table (Carbon style) ---------- */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; min-width: 640px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+caption { text-align: left; }
+th, td { height: 48px; padding: 0 16px; border-bottom: 1px solid var(--border-subtle); white-space: nowrap; }
+thead th {
+  background: var(--layer-accent);
+  font-size: 14px; line-height: 18px; font-weight: 600;
+  text-align: left; border-bottom: 0;
+}
+td, tbody th { font-size: 14px; line-height: 18px; font-weight: 400; text-align: left; }
+.num { text-align: right; }
+
+/* ---------- Footer ---------- */
+.footer {
+  margin-top: 64px;
+  padding: 24px 0 48px;
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-secondary);
+}
+.footer .mono { overflow-wrap: anywhere; }
+.footer__attribution { font-size: 14px; line-height: 20px; color: var(--text-primary); }
+</style>
+</head>
+<body>
+
+<header class="shell">
+  <span class="shell__name">Crypto data <strong>pipeline</strong></span>
+  <span class="shell__meta mono">CoinGecko &middot; USD</span>
+</header>
+
+<main class="page">
+
+  <section class="page-header" aria-labelledby="page-title">
+    <p class="eyebrow mono">Snapshot <time datetime="{{ generated_iso }}">{{ generated_at }}</time></p>
+    <h1 id="page-title">Crypto market snapshot</h1>
+    <p class="lead">
+      The top 100 coins by market cap, with {{ kpis.stablecoins_excluded }} stablecoins removed so the
+      figures reflect {{ kpis.coin_count }} price-moving assets. All values are in US dollars.
+    </p>
+  </section>
+
+  {# ---------- KPI row ---------- #}
+  <section aria-label="Key figures">
+    <dl class="kpis">
+      <div class="kpi">
+        <dt class="kpi__label mono">Total market cap</dt>
+        <dd class="kpi__value">{{ kpis.total_market_cap_usd | usd }}</dd>
+        <dd class="kpi__note">{{ kpis.coin_count }} coins, stablecoins excluded</dd>
+      </div>
+      <div class="kpi">
+        <dt class="kpi__label mono">24h volume</dt>
+        <dd class="kpi__value">{{ kpis.total_volume_24h_usd | usd }}</dd>
+        <dd class="kpi__note">{{ "%.1f" | format(volume_share_pct) }}% of market cap traded</dd>
+      </div>
+      <div class="kpi">
+        <dt class="kpi__label mono">Coins up / down</dt>
+        <dd class="kpi__value">
+          <span class="up">{{ kpis.coins_up }}<svg class="kpi__icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3l6 9H2z"></path></svg></span>
+          <span class="flat">/</span>
+          <span class="down">{{ kpis.coins_down }}<svg class="kpi__icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13L2 4h12z"></path></svg></span>
+        </dd>
+        <dd class="kpi__note">{{ kpis.coins_up }} up, {{ kpis.coins_down }} down in 24h</dd>
+      </div>
+      <div class="kpi">
+        <dt class="kpi__label mono">Weighted 24h change</dt>
+        <dd class="kpi__value {{ kpis.weighted_change_24h_pct | trend }}">{{ kpis.weighted_change_24h_pct | pct }}</dd>
+        <dd class="kpi__note">Each coin weighted by market cap</dd>
+      </div>
+    </dl>
+  </section>
+
+  {# ---------- Tier share chart + tier table ---------- #}
+  <section class="section grid" aria-label="Market-cap tiers">
+    <div class="col-chart">
+      <div class="tile">
+        <h2 class="tile__title" id="tier-chart-title">Market-cap share by tier</h2>
+        <p class="tile__takeaway">{{ tier_takeaway }}</p>
+        <div class="tile__body">
+          <svg class="bars" width="100%" height="{{ tier_chart.height }}" role="img" aria-labelledby="tier-chart-title tier-chart-desc">
+            <desc id="tier-chart-desc">{% for row in tier_chart.rows %}{{ row.label }}: {{ row.value_text }} of market cap, {{ row.detail }}. {% endfor %}</desc>
+            {% for row in tier_chart.rows %}
+            <text class="bar-label" x="0" y="{{ row.y + 16 }}">{{ row.label }} <tspan class="bar-detail" dx="4">{{ row.detail }}</tspan></text>
+            <text class="bar-value" x="100%" y="{{ row.y + 16 }}" text-anchor="end">{{ row.value_text }}</text>
+            <rect class="bar-track" x="0" y="{{ row.y + 24 }}" width="100%" height="12"></rect>
+            <rect class="bar-fill--accent" x="0" y="{{ row.y + 24 }}" width="{{ row.width_pct }}%" height="12"></rect>
+            {% endfor %}
+          </svg>
+          <p class="legend">Tiers: Mega &ge; $100B, Large $10B&ndash;100B, Mid $1B&ndash;10B, Small &lt; $1B. Bar length is the share of total market cap.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-table">
+      <div class="tile">
+        <h2 class="tile__title" id="tier-table-title">Tier summary</h2>
+        <p class="tile__takeaway">Size, share and 24h performance of each market-cap tier.</p>
+        <div class="tile__body table-scroll" tabindex="0" role="region" aria-labelledby="tier-table-title">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Tier</th>
+                <th scope="col" class="num">Coins</th>
+                <th scope="col" class="num">Market cap</th>
+                <th scope="col" class="num">Share</th>
+                <th scope="col" class="num">Median 24h</th>
+                <th scope="col" class="num">Mean 24h</th>
+                <th scope="col" class="num">24h volume</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tier in tiers %}
+              <tr>
+                <th scope="row">{{ tier.tier }}</th>
+                <td class="num">{{ tier.coin_count }}</td>
+                <td class="num">{{ tier.total_market_cap_usd | usd }}</td>
+                <td class="num">{{ "%.1f" | format(tier.market_cap_share_pct) }}%</td>
+                <td class="num {{ tier.median_change_24h_pct | trend }}">{{ tier.median_change_24h_pct | pct }}</td>
+                <td class="num {{ tier.mean_change_24h_pct | trend }}">{{ tier.mean_change_24h_pct | pct }}</td>
+                <td class="num">{{ tier.total_volume_24h_usd | usd }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- Top movers ---------- #}
+  <section class="section grid" aria-label="Top movers in the last 24 hours">
+    {% for chart, title, tone, sign in [(gainers, "Top 10 gainers, 24h", "up", "+"), (losers, "Top 10 losers, 24h", "down", "−")] %}
+    <div class="col-half">
+      <div class="tile">
+        <h2 class="tile__title" id="movers-{{ tone }}-title">{{ title }}</h2>
+        <p class="tile__takeaway">{% if chart.rows %}{{ chart.rows[0].label }} leads at {{ chart.rows[0].value_text }}.{% else %}No coins moved in this direction.{% endif %}</p>
+        <div class="tile__body">
+          {% if chart.rows %}
+          <svg class="bars" width="100%" height="{{ chart.height }}" role="img" aria-labelledby="movers-{{ tone }}-title movers-{{ tone }}-desc">
+            <desc id="movers-{{ tone }}-desc">{{ chart.description }}</desc>
+            {% for row in chart.rows %}
+            <text class="bar-label" x="0" y="{{ row.y + 16 }}">{{ row.label }} <tspan class="bar-detail" dx="4">{{ row.detail }}</tspan></text>
+            <text class="bar-value {{ tone }}" x="100%" y="{{ row.y + 16 }}" text-anchor="end">{{ row.value_text }}</text>
+            <rect class="bar-track" x="0" y="{{ row.y + 24 }}" width="100%" height="12"></rect>
+            <rect class="bar-fill--{{ tone }}" x="0" y="{{ row.y + 24 }}" width="{{ row.width_pct }}%" height="12"></rect>
+            {% endfor %}
+          </svg>
+          {% else %}
+          <p class="empty">None in this snapshot.</p>
+          {% endif %}
+          <p class="legend">{{ sign }} sign marks the direction. Both charts share one scale, so bar lengths compare across them.</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <footer class="footer">
+    <p class="footer__attribution">Data provided by <a href="https://www.coingecko.com/" rel="noopener noreferrer">CoinGecko</a>.</p>
+    <p>Generated <time datetime="{{ generated_iso }}">{{ generated_at }}</time> by an agentic pipeline (Google ADK: ingest, transform, store, report). Stablecoins are excluded by a known-ID list and a $1-peg rule.</p>
+    <p class="mono">Run {{ run_ts }} &middot; processed: {{ processed_prefix }} &middot; report: {{ report_prefix }}</p>
+  </footer>
+
+</main>
+</body>
+</html>
