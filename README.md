@@ -97,7 +97,7 @@ GOOGLE_API_KEY=<your AI Studio key>
 GCS_BUCKET=<your bucket name>
 ```
 
-`GEMINI_MODEL` defaults to `gemini-3.8-flash`. `COINGECKO_API_KEY` and `GOOGLE_CLOUD_PROJECT` are optional.
+`GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`. `COINGECKO_API_KEY` and `GOOGLE_CLOUD_PROJECT` are optional.
 
 ### 3. Create the private bucket and log in (skip for `--local-only`)
 
@@ -132,7 +132,7 @@ You can also set `STORAGE_MODE=local` in `.env` instead of passing `--local-only
 Console output looks like this (your numbers will differ):
 
 ```
-Crypto data pipeline | model: gemini-3.8-flash | storage: gcs
+Crypto data pipeline | model: gemini-3.5-flash-lite | storage: gcs
 
 [1/4] ingest_agent
       -> calling tool fetch_market_data()
@@ -233,6 +233,7 @@ The tests use a small made-up fixture (`tests/fixtures/sample_markets.json`) and
 | `GOOGLE_API_KEY is missing` | Create a key at <https://aistudio.google.com/apikey>, put it in `.env`, and make sure you copied `.env.example` to `.env` in the project root. |
 | `Gemini rejected the API key` | The key is wrong or was deleted. Create a new one and update `.env`. |
 | `Gemini model not found` | Google retires models over time. Set `GEMINI_MODEL` in `.env` to a current Flash model listed at <https://ai.google.dev/gemini-api/docs/models>. |
+| `This model is currently experiencing high demand` | Google's servers are temporarily overloaded. Each Gemini call already retries up to 5 times over about 30 seconds. If it still fails, try again a few minutes later, or set `GEMINI_MODEL` in `.env` to another current Flash model, such as `gemini-3.8-flash`. |
 | `HTTP 429 rate limit` from CoinGecko | Keyless access shares a limit with everyone on your IP address. Wait a minute and retry, or add a free Demo key as `COINGECKO_API_KEY`. The tool already retries 3 times with backoff. |
 | `Google Cloud credentials are missing or expired` | Run `gcloud auth application-default login`. |
 | `Bucket '...' does not exist` | Check the `GCS_BUCKET` spelling and the project, or create the bucket (step 3). |

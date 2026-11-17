@@ -47,6 +47,11 @@ def describe_llm_error(exc: Exception) -> str:
         return "Gemini rejected the API key. Check GOOGLE_API_KEY in .env."
     if code == 429:
         return "Gemini quota or rate limit reached. Wait a minute and try again."
+    if code in (503, 504):
+        return (
+            "Gemini is overloaded right now (it kept retrying). Try again in a few minutes, "
+            "or set GEMINI_MODEL in .env to another current Flash model (see README)."
+        )
     return f"Gemini call failed: {text}"
 
 

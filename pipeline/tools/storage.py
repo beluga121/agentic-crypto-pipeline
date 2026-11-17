@@ -155,4 +155,10 @@ def upload_to_gcs(tool_context: ToolContext) -> dict:
         return {"status": "error", "error_message": config.mask_secrets(exc)}
 
     state["gcs_uris"] = locations
-    return {"status": "success", "mode": config.storage_mode(), "files_stored": len(locations)}
+    # Name the destination explicitly so the agent's summary says where the
+    # files really went (a local mirror is not "Google Cloud Storage").
+    if config.storage_mode() == "local":
+        destination = "local mirror folder output/gcs_mirror/ (GCS skipped)"
+    else:
+        destination = f"private GCS bucket gs://{config.gcs_bucket()}"
+    return {"status": "success", "destination": destination, "files_stored": len(locations)}

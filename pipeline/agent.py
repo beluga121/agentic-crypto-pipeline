@@ -15,6 +15,7 @@ in state under its output_key.
 """
 
 from google.adk.agents import LlmAgent, SequentialAgent
+from google.adk.models import Gemini
 from google.genai import types
 
 from pipeline import config
@@ -25,6 +26,20 @@ from pipeline.tools.transform import transform_market_data
 
 # Temperature 0: we want the same plain status line every run, not creativity.
 _GENERATION = types.GenerateContentConfig(temperature=0)
+
+# Gemini sometimes answers "high demand" (503) or "rate limit" (429) for a
+# few seconds. Retrying with exponential backoff (waits of about 2, 4, 8 and
+# 16 s, capped at 30 s) usually gets through, instead of failing the whole run.
+# Not retried: errors that retrying cannot fix, such as a bad key (400/403) or
+# an unknown model (404), and 504 timeouts, because each of those has already
+# waited about a minute and retrying would make one run take many minutes.
+_RETRY = types.HttpRetryOptions(
+    attempts=5,
+    initial_delay=2.0,
+    max_delay=30.0,
+    exp_base=2.0,
+    http_status_codes=[429, 500, 503],
+)
 
 # Shared rules appended to every instruction. Note: ADK fills in {curly}
 # placeholders from session state, so the instructions avoid braces.
@@ -41,7 +56,7 @@ def _step(name: str, description: str, task: str, tool, output_key: str) -> LlmA
     """Build one pipeline step: an LlmAgent with a single tool."""
     return LlmAgent(
         name=name,
-        model=config.gemini_model(),
+        model=Gemini(model=config.gemini_model(), retry_options=_RETRY),
         description=description,
         instruction=f"{task} {_RULES}",
         tools=[tool],
