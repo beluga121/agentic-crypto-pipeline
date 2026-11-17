@@ -19,10 +19,9 @@ PROCESSED_DIR = OUTPUT_DIR / "processed"
 REPORT_DIR = OUTPUT_DIR / "report"
 GCS_MIRROR_DIR = OUTPUT_DIR / "gcs_mirror"
 
-# A current, stable Gemini Flash model (checked November 2026). Flash-Lite is the
-# fastest and cheapest Flash tier, and plenty for agents that only call one tool.
+# A current, stable Gemini Flash model (checked November 2026).
 # Override it with GEMINI_MODEL in .env if Google retires it.
-DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
+DEFAULT_GEMINI_MODEL = "gemini-3.8-flash"
 
 # Load .env once, when this module is first imported. Values that are already
 # set in the real environment win, which is the usual convention.

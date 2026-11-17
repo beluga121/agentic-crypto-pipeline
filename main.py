@@ -50,7 +50,7 @@ def describe_llm_error(exc: Exception) -> str:
     if code in (503, 504):
         return (
             "Gemini is overloaded right now (it kept retrying). Try again in a few minutes, "
-            "or set GEMINI_MODEL in .env to another current Flash model (see README)."
+            "or set GEMINI_MODEL=gemini-3.5-flash-lite in .env."
         )
     return f"Gemini call failed: {text}"
 
